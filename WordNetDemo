@@ -1,0 +1,81 @@
+package examples;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import rita.wordnet.RiWordnet;
+
+public class WordNetDemo {
+	static double denom=0;
+	public static double method(int i,int j) {
+String start;	
+	int f=0;
+	double dist1=0;
+try{
+ Connection con =DriverManager.getConnection("jdbc:mysql://localhost:3306/test", "root", "root");
+ Statement statement = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+ResultSet.CONCUR_UPDATABLE);
+	 // count no. of documents
+			
+ResultSet rs=statement.executeQuery("SELECT  words,frequency  FROM list where id='"+i+"'");
+dist1=0;
+while(rs.next()){ 	
+			start = rs.getString("words");
+			f=rs.getInt("frequency");
+			double d= method1(j,start,f);
+			System.out.println("d="+d);
+dist1=dist1+d;
+System.out.println("dist1="+dist1+"denom="+WordNetDemo.denom);
+                                     }
+			dist1=dist1/WordNetDemo.denom;
+		System.out.println("rel between doc "+i+"doc"+j+"="+dist1)			statement.executeUpdate("insert into relevance values('"+i+"', '"+j+"','"+dist1+"')");
+		con.close();
+		}catch(Exception e)
+		{System.out.println("Exception :"+e);}
+		return dist1;
+	}
+	public static double method1(int j1,String start, int f1)
+	{
+     RiWordnet wordnet1 = new RiWordnet(null);
+    double rel=0;
+	    float dist=(float)0.000000001;
+	   //float denom=0;
+	try{
+Connection con1 =DriverManager.getConnection("jdbc:mysql://localhost:3306/test", "root", "root"); 
+Statement statement1=con1.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE
+,ResultSet.CONCUR_UPDATABLE);
+ResultSet bs = statement1.executeQuery("SELECT words, frequency FROM list where id='"+j1+"'");
+   while(bs.next())
+		{  
+               String end = bs.getString("words");
+	   int f2=bs.getInt("frequency");
+	  String	pos = wordnet1.getBestPos(start);
+	System.out.println("\n\nRelationship between: " + start + " and " + end);
+	try{
+	    if (start!=end)dist = wordnet1.getDistance(start,end,pos);
+	   else {dist=(float)1.0;System.out.println("dist error");}
+	  if (dist==0.0)dist=(float)0.1;
+	}catch(Exception e){dist=(float)0.1;
+	System.out.println("dist error in catch");}
+	 System.out.println(start + " and " + end + " are related by a distance of: " + dist+"j"+j1);
+		 rel=rel+(f1*f2/dist);
+WordNetDemo.denom=WordNetDemo.denom+(f1*f2);
+		System.out.println("method1 "+rel+"denom="+WordNetDemo.denom);   		  }
+con1.close();
+		System.out.println("method1 "+rel);
+		}
+		catch(Exception e){
+                              System.out.println("Exception :");
+                              }
+		return rel; // relevance based on one word in current doc and all words in other doc
+		}// end of method1
+}// end of class
+			
+
+
+
+
+
+
+
+
