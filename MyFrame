@@ -1,0 +1,413 @@
+ import a.*;
+import java.sql.Statement;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.util.Enumeration;
+import java.util.Vector;
+import examples.*;
+public class myFrame extends JFrame
+{
+final JTextField text=new JTextField(25);
+final JTextArea textArea = new JTextArea(15,22); JFileChooser chooser;
+public myFrame()	
+	{	
+		
+Toolkit kit = Toolkit.getDefaultToolkit();
+ Dimension screenSize = kit.getScreenSize();
+  int Height = screenSize.height;
+  int Width = screenSize.width;
+ setTitle("ADMINISTRATOR FUNCTIONS");
+ setLocation(Height/3,Width/5);
+ setVisible(true);
+ setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		//creating buttons and tool tip
+	
+		JButton b=new JButton("HTML TO TEXT");
+		JButton b1=new JButton("REMOVE STOP WORDS");
+		JButton b2=new JButton("STEMMING");
+		JButton b3=new JButton("WORD COUNT");
+		JButton b4=new JButton("browse");
+		b.setToolTipText("Converts html file to Text file");
+		b1.setToolTipText("REMOVES STOP WORDS FROM THE DOCUMENT");
+		b2.setToolTipText("STEMS THE WORDS IN THE DOCUMENT");
+		b3.setToolTipText("COUNTING THE WORDS");
+		b4.setToolTipText("BROWSE THE FILES");
+
+		setLayout(new BorderLayout());
+		ActionListener l1=new OperatorListener()
+
+		/*panel*/
+		JPanel panel1=new JPanel();
+		JPanel panel2=new JPanel();
+		JPanel panel3=new JPanel();
+		JProgressBar pb=new JProgressBar(0,100); 
+		//text field label
+                       panel2.add(new JLabel("Enter The Folder Path", SwingConstants.LEFT));
+		panel2.add(text);
+		panel2.add(b4);
+	         //add Button to pannel
+		panel1.add(b);
+		panel1.add(b1);
+		panel1.add(b2);
+		panel1.add(b3);
+	
+		//add panel to frame
+	
+		add(panel1);
+		add(panel2);
+		add(panel1,BorderLayout.SOUTH );
+		add(panel3, BorderLayout.EAST);
+		add(panel2, BorderLayout.NORTH);
+		
+	         //add action listener to button
+		b.addActionListener(l1);
+		b1.addActionListener(l1);
+
+		b2.addActionListener(l1);
+		b3.addActionListener(l1);	
+		b4.addActionListener(l1);
+		//adding scroll pane to text area
+		
+		JScrollPane bar=new JScrollPane(textArea);
+
+		add(bar,BorderLayout.CENTER);
+		pack();
+
+	}
+	class OperatorListener implements ActionListener 
+	{
+		private String path;
+	
+		public void actionPerformed(ActionEvent ac)
+		{
+		String input=ac.getActionCommand();
+		if(input.equals("browse"))
+		{
+		myFrame myf=new myFrame();
+	          chooser = new JFileChooser();
+	          chooser.setCurrentDirectory(new java.io.File("."));
+                      String choosertitle ="string here";
+	          chooser.setDialogTitle(choosertitle );
+                    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+	         chooser.setAcceptAllFileFilterUsed(false);
+			
+	if(chooser.showOpenDialog(myf)== JFileChooser.APPROVE_OPTION) {
+           System.out.println("getCurrentDirectory(): "  +  chooser.getCurrentDirectory());
+           System.out.println("getSelectedFile() : "  +  chooser.getSelectedFile());
+          String address=chooser.getSelectedFile().toString();
+          text.setText(address);
+      }
+	else {
+	 System.out.println("No Selection ");
+      }
+	myf.dispose();
+	}
+			
+  else if(input.equals("HTML TO TEXT"))
+	{	path=text.getText();
+                   if(path.length()<1)
+	{
+JOptionPane.showMessageDialog(null,"PLEASE ENTER THE FOLDER'S PATH","dialog",JOptionPane.ERROR_MESSAGE);
+	}
+else{
+	try{
+ Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/test", "root", "root");
+ Statement statement = con.createStatement();
+ statement.executeUpdate("DELETE FROM url");
+ con.close();
+}
+catch(Exception e)
+{
+System.out.println("error deleting table");
+}
+   File fo=new File(path);
+   textArea.append("Searching in..." + fo.getName());
+   System.out.println("Searching in..." + fo.getName());
+  String internalNames[] = fo.list();
+for(int i=0; i<internalNames.length; i++)
+    {
+	 try{
+ Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/test", "root", "root");
+ Statement statement = con.createStatement();
+ textArea.append("\nProcessing..."+internalNames[i]);
+try {
+	// the HTML to convert
+	String name=path+"\\"+internalNames[i];	
+	  int s=i+1;
+	  String name1=name;
+	   System.out.println(name1);
+             String name2=name1.replace("\\", "-");
+            String name3=name2.replace(" ", "*");
+	 System.out.println(name3);
+statement.executeUpdate("INSERT INTO url (id,url)VALUES ('"+s+"','"+name3+"')");
+FileReader in = new FileReader(name);
+    Html2Text parser = new Html2Text();
+     parser.parse(in);
+     in.close();
+     FileWriter fstream=new FileWriter("C:\\just try\\test\\text"+i+".txt");
+     BufferedWriter out=new BufferedWriter(fstream);
+     out.write(parser.getText());
+    out.close();	
+     } 
+catch (Exception e) 	{
+     e.printStackTrace();
+   }
+  con.close();
+	}	
+catch(Exception e){
+                System.out.println("error:"+e);
+	    }
+	  }
+JOptionPane.showMessageDialog(null,"Tags removed from HTML files");   
+ }}
+else if(input.equals("REMOVE STOP WORDS"))
+{	String path="c:/just try/test";
+	File fs=new File(path);
+	textArea.append("Searching in..." + fs.getName());
+	System.out.println("Searching in..." + fs.getName());
+	 String internalNames[] = fs.list();
+	for(int i=0; i<internalNames.length; i++)
+	{
+	   textArea.append("\nProcessing..."+internalNames[i]);
+	try{
+	String fname=path+"/"+internalNames[i];
+	FileInputStream fstream = new FileInputStream(fname);
+	DataInputStream in = new DataInputStream(fstream);
+	BufferedReader br = new BufferedReader(new InputStreamReader(in));
+             String strLine;
+	Writer output = null;
+	File file = new File("C:\\just try\\test2\\stop_word_removed"+i+".txt");
+	output = new BufferedWriter(new FileWriter(file));	
+       while ((strLine = br.readLine()) != null)
+    {
+          String[] arr=strLine.split(" ");
+		int len=arr.length;
+		 // words to process?
+	Vector words = new Vector();
+	for (int j = 0; j < len; j++) 
+          {
+	if (arr[j].trim().length() > 0)
+	words.add(arr[j].trim());
+          }
+	Stopwords stopwords = new Stopwords();
+	Enumeration enm = stopwords.elements();
+	int j = 0;
+	while (enm.hasMoreElements())
+          {
+	enm.nextElement();
+	j++;
+
+          }
+String abc;
+    // check words for being a stopword
+    if (words.size() > 0) 
+	{
+             for ( j = 0; j < words.size(); j++) {
+	if(stopwords.is(words.get(j).toString())!=true) {
+		abc=words.get(j).toString();
+		output.write(abc);
+		output.write(" ");
+	         }
+                       }
+                }}output.close();
+}
+catch (Exception e) {
+	 e.printStackTrace();
+	}	
+}//for loop ends
+
+JOptionPane.showMessageDialog(null,"Stop words removed from files");
+}
+//elseif ends here
+
+else if(input.equals("STEMMING"))
+{	
+    String path="c:/just try/test2";
+    File fp=new File(path);
+   textArea.append("Searching in..." + fp.getName());
+    System.out.println("Searching in..." + fp.getName());
+   String internalNames[] = fp.list();
+   for(int i=0; i<internalNames.length; i++) {
+  textArea.append("\nProcessing..."+internalNames[i]);
+try{
+    Writer output2 = null;
+   File file2 = new File("c:\\just try\\test3\\stemmed"+i+".txt");
+   output2 = new BufferedWriter(new FileWriter(file2));	
+   char[] w = new char[501];
+    Stemmer s = new Stemmer();
+    for (int j = 0; j < 1; j++)
+      try{
+	String stem=path+"/"+internalNames[i];
+	FileInputStream in1 = new FileInputStream(stem);
+ try{ 
+	while(true) {  
+	int ch = in1.read();
+              if (Character.isLetter((char) ch)){
+                 int k = 0;
+                 while(true){  
+	  ch = Character.toLowerCase((char) ch);
+              w[k] = (char) ch;
+               if (k < 500) k++;
+               ch = in1.read();
+               if (!Character.isLetter((char) ch)){
+                       /* to test add(char ch) */
+                       for (int c = 0; c < k; c++) s.add(w[c]);
+                   /* or, to test add(char[] w, int j) */
+                       /* s.add(w, j); */
+                          s.stem();
+                       {  String u;
+                      /* and now, to test toString() : */
+                          u = s.toString();
+/* to test getResultBuffer(), getResultLength() : */
+                          /* u = new String(s.getResultBuffer(), 0, s.getResultLength()); */
+//System.out.print(u);
+		output2.write(u);
+                       }
+                       break;
+                    }}
+              }
+              if (ch < 0) break;
+		output2.write((char)ch);
+             // System.out.print((char)ch);
+           }
+         }
+         catch (IOException e)
+         {  System.out.println("error reading ");
+            break;
+         }
+      }
+      catch (FileNotFoundException e)
+      {  System.out.println("file not found");
+         break;  }
+	
+output2.close();
+
+	}
+	catch (IOException e)
+         {  System.out.println("error ");
+
+         }		
+
+}
+JOptionPane.showMessageDialog(null,"All words in the given document's were stemmed");
+}
+else if(input.equals("WORD COUNT"))
+{
+    try{
+	 Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/test", "root", "root");
+	 Statement statement = con.createStatement();
+	 statement.executeUpdate("DELETE from list");
+	 con.close();
+       }
+	catch(Exception e)
+       {
+	System.out.println("cannot clear rows"+e);
+      }
+	String path="c:/just try/test3";
+	File fc=new File(path);
+	textArea.append("Searching in..." + fc.getName());
+	System.out.println("Searching in..." + fc.getName());
+            String internalNames[] = fc.list();
+	    try{
+    Connection  con =DriverManager.getConnection("jdbc:mysql://localhost:3306/test", "root", "root");
+    Statement statement = con.createStatement();
+   statement.executeUpdate("DELETE FROM list1;");
+			con.close();    	    }
+     catch(Exception e)
+   {
+   System.out.println("cannot delete list1:"+e);
+   }
+for(int i=0; i<internalNames.length; i++)
+   {
+	  textArea.append("\nProcessing..."+internalNames[i]);
+               String w1="c:/just try/test3/"+internalNames[i];
+               String w2="Final"+i+".txt";
+               wordcount obj=new wordcount(w1,w2,i);	
+   } try{
+Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/test", "root", "root");
+ Statement statement = con.createStatement();
+ResultSet rs = statement.executeQuery("SELECT distinct words FROM list order by words");
+String[] words=new String[100000];
+   int i=0;
+while(rs.next())
+        {
+        words[i]=rs.getString("words");
+	i=i+1;
+	}			
+	  int j=0;
+while(j<i) 
+{
+ String name="";
+String w=words[j];
+rs=statement.executeQuery("select id from list where words='"+w+"'");
+while(rs.next()) {
+   name=name+rs.getString("id");
+  name = name+",";
+       }
+  statement.executeUpdate("insert into list1 values('"+name+"','"+w+"')");
+		     // con.close();
+	  j=j+1;
+		}		
+         con.close();
+}
+catch(Exception e)
+{
+ System.out.println("cannot create view :"+e);
+}
+// Ranking rank=new Ranking();
+ {
+try{
+Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/test", "root", "root");
+Statement statement = con.createStatement();
+Ranking ranking = new Ranking();
+double r=0;
+String pid; 
+for(int i=0;i<9;i++)
+{
+	pid=Integer.toString(i+1);
+	r=ranking.rank(pid);
+	System.out.println("rank of "+pid+" = "+r);
+    statement.executeUpdate("update url set rank='"+r+"' where id='"+pid+"'");
+}
+con.close();
+}
+catch(Exception e){
+System.out.println("error occured in insert the rank:");
+}
+}//ends here
+try{
+ Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/test", "root", "root");
+ Statement statement = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+ResultSet.CONCUR_UPDATABLE);
+ statement.executeUpdate("DELETE FROM relevance");
+  System.out.println(WordNetDemo.method(1,4));
+   System.out.println(WordNetDemo.method(1,5));
+   System.out.println(WordNetDemo.method(2,5)); 
+  System.out.println(WordNetDemo.method(2,6)); 
+   System.out.println(WordNetDemo.method(3,5)); 
+   System.out.println(WordNetDemo.method(3,6)); 
+    System.out.println(WordNetDemo.method(4,7));
+    System.out.println(WordNetDemo.method(5,7));
+   System.out.println(WordNetDemo.method(5,8)); 
+   System.out.println(WordNetDemo.method(6,8)); 
+  con.close();
+}
+ catch(Exception e) {
+	System.out.println("error"+e);
+	    }    	
+JOptionPane.showMessageDialog(null,"ALL Necessary Words Have Been Stored In DataBase");	
+}
+}
+}
+}
+
+
+
+
+
